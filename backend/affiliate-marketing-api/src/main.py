@@ -3,6 +3,10 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.models.user import db
@@ -14,7 +18,7 @@ from src.routes.social_media import social_media_bp
 from src.routes.subscription import subscription_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'asdf#FGSgvasgf$5$WGT')
 
 # Enable CORS for all routes
 CORS(app, origins="*")
@@ -25,8 +29,14 @@ app.register_blueprint(content_bp, url_prefix='/api/content')
 app.register_blueprint(social_media_bp, url_prefix='/api/social')
 app.register_blueprint(subscription_bp, url_prefix='/api/subscription')
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+# Database configuration - use PostgreSQL from environment
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # Fallback to SQLite for development
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+    
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
