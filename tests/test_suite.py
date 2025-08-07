@@ -697,7 +697,7 @@ Generated: {report_time}
                             report += f"- {test['name']}: {test.get('error', 'Unknown error')}\n"
         
         # Save report to file
-        with open('/home/ubuntu/affiliate-marketing-saas/UAT_TEST_REPORT.md', 'w') as f:
+        with open('UAT_TEST_REPORT.md', 'w') as f:
             f.write(report)
         
         logger.info(f"\n📋 UAT Test Report saved to UAT_TEST_REPORT.md")

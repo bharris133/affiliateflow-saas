@@ -273,7 +273,7 @@ ${
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-tour-id="content-type">
                       <Label
                         htmlFor="contentType"
                         className="text-sm font-semibold text-gray-700"
@@ -324,7 +324,7 @@ ${
                     </div>
                   </div>
 
-                  <div className="space-y-2 ai-prompt-input">
+                  <div className="space-y-2" data-tour-id="topic">
                     <Label
                       htmlFor="topic"
                       className="text-sm font-semibold text-gray-700"
@@ -340,7 +340,7 @@ ${
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-tour-id="audience">
                     <Label
                       htmlFor="audience"
                       className="text-sm font-semibold text-gray-700"
@@ -356,7 +356,7 @@ ${
                     />
                   </div>
 
-                  <div className="space-y-2 keywords-input">
+                  <div className="space-y-2" data-tour-id="keywords">
                     <Label
                       htmlFor="keywords"
                       className="text-sm font-semibold text-gray-700"
@@ -432,7 +432,7 @@ ${
                     </div>
                   </div>
 
-                  <div className="pt-4 generate-button">
+                  <div className="pt-4" data-tour-id="generate-button">
                     <Button
                       onClick={handleGenerate}
                       className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"

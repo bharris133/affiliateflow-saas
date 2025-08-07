@@ -4,6 +4,23 @@
 
 This guide will get your AffiliateFlow SaaS platform running quickly with our **completely redesigned professional interface** and **comprehensive tutorial system**.
 
+## ⚡ **QUICK COMMANDS REFERENCE**
+
+**Backend startup (WORKING SOLUTION):**
+
+- **Git Bash/WSL**: `source venv/Scripts/activate` then `python src/main.py`
+- **PowerShell Alternative**: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` then `.\venv\Scripts\Activate.ps1` then `python src\main.py`
+- **Direct Path**: `.\venv\Scripts\python.exe src\main.py` (skip activation)
+
+**Frontend startup:**
+
+- Any terminal: `pnpm run dev`
+
+**Database demo login:**
+
+- Email: `demo@affiliateflow.com`
+- Password: `demo123!`
+
 ## ⚡ **QUICK SETUP**
 
 ### **Step 1: Database Setup (2 minutes)**
@@ -30,18 +47,16 @@ setup_complete.bat
 
 ```bash
 # Navigate to backend
-cd ..\backend\affiliate-marketing-api
+cd backend/affiliate-marketing-api
 
-# Create virtual environment (if not exists)
-python -m venv venv
-venv\Scripts\activate  # Windows PowerShell
-
-# Install dependencies
-pip install -r requirements.txt
+# Activate virtual environment (Git Bash/WSL)
+source venv/Scripts/activate
 
 # Start Flask development server
 python src/main.py
 ```
+
+**Note**: Git Bash or WSL works best for virtual environment activation. After activation, you should see `(venv)` in your prompt.
 
 **Backend Features:**
 
@@ -56,14 +71,13 @@ python src/main.py
 
 ```bash
 # Navigate to frontend (new terminal)
-cd ..\frontend\affiliate-marketing-dashboard
+cd frontend/affiliate-marketing-dashboard
 
-# Install dependencies with pnpm (faster than npm)
-pnpm install
-
-# Start Vite development server
+# Start Vite development server (dependencies already installed)
 pnpm run dev
 ```
+
+**Note**: After initial setup, `pnpm run dev` works directly since dependencies are already installed.
 
 **Frontend Features:**
 
@@ -89,10 +103,13 @@ pnpm run dev
 
 ### **🎓 Interactive Tutorial System**
 
-- **Take the Guided Tour**: Click the "?" help button for step-by-step tutorials
-- **Feature Walkthroughs**: Interactive demos for each major feature
-- **Demo Bot**: Contextual help with simulated workflows
-- **Onboarding Checklist**: Track your progress through platform setup
+- **Comprehensive Coverage**: Step-by-step tutorials for ALL platform features - Dashboard, Content Generation, Social Media, Analytics, Affiliate Links, Email Marketing, Subscription Management, and Settings
+- **Smart Suggestions**: Page-specific tour recommendations based on your current location
+- **Progress Tracking**: Visual completion indicators and progress tracking across all tours
+- **Complete Workflows**: End-to-end demonstrations showing real affiliate marketing workflows
+- **Quick Actions**: One-click shortcuts to jump directly to key features
+- **Feature Categories**: Organized into Core Platform, Advanced Features, and Setup & Configuration
+- **Interactive Highlighting**: Real element highlighting with contextual tooltips and smooth navigation
 
 ### **📊 Professional Dashboard**
 
@@ -163,6 +180,49 @@ TWITTER_API_KEY=your-twitter-api-key
 
 ## 🔧 **TROUBLESHOOTING**
 
+### **Backend Not Starting (ModuleNotFoundError):**
+
+If you get `ModuleNotFoundError: No module named 'dotenv'`, the virtual environment isn't properly activated. Try these solutions:
+
+**SOLUTION 1: PowerShell Script Execution (Most Common Fix)**
+
+```powershell
+cd backend/affiliate-marketing-api
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\venv\Scripts\Activate.ps1
+python src/main.py
+```
+
+**SOLUTION 2: Batch File Activation**
+
+```cmd
+cd backend/affiliate-marketing-api
+venv\Scripts\activate.bat
+python src/main.py
+```
+
+**SOLUTION 3: Direct Python Path**
+
+```powershell
+cd backend/affiliate-marketing-api
+.\venv\Scripts\python.exe src/main.py
+```
+
+**SOLUTION 4: Force PowerShell Activation**
+
+```powershell
+cd backend/affiliate-marketing-api
+& ".\venv\Scripts\Activate.ps1"
+python src/main.py
+```
+
+**Verify Activation Works:**
+After activation, your prompt should show `(venv)` at the beginning. Test with:
+
+```powershell
+python -c "import dotenv; print('Virtual environment is working!')"
+```
+
 ### **Database Issues:**
 
 ```powershell
@@ -180,7 +240,7 @@ psql -h localhost -U affiliateflow_user -d affiliateflow_db
 
 ```bash
 # Ensure virtual environment is activated
-venv\Scripts\activate
+./venv/Scripts/activate
 
 # Check for missing dependencies
 pip install -r requirements.txt
@@ -194,20 +254,53 @@ netstat -an | findstr :5000
 
 ### **Frontend Not Loading:**
 
+**If you see a blank page at localhost:5173, try these solutions in order:**
+
+**SOLUTION 1: Check for JavaScript errors**
+
 ```bash
+# Open browser developer tools (F12) and check Console tab for errors
+# Look for red error messages
+```
+
+**SOLUTION 2: Restart the Vite dev server**
+
+```bash
+cd frontend/affiliate-marketing-dashboard
+# Stop the server (Ctrl+C) then restart
+pnpm run dev
+```
+
+**SOLUTION 3: Clear cache and reinstall**
+
+```bash
+cd frontend/affiliate-marketing-dashboard
 # Clear pnpm cache
 pnpm store prune
 
 # Remove node_modules and reinstall
-Remove-Item -Recurse -Force node_modules
-Remove-Item package-lock.json -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+Remove-Item pnpm-lock.yaml -ErrorAction SilentlyContinue
 pnpm install
+pnpm run dev
+```
 
-# Check Vite configuration
-pnpm run build  # Test build process
+**SOLUTION 4: Check Vite configuration**
 
-# Verify Tailwind CSS v4 setup
-# Check if @tailwindcss/vite plugin is properly configured
+```bash
+# Test if the build process works
+pnpm run build
+
+# If build fails, check vite.config.js
+```
+
+**SOLUTION 5: Verify React components**
+
+```bash
+# Check if main files exist
+ls src/main.jsx
+ls src/App.jsx
+ls src/index.css
 ```
 
 ### **Common Issues & Solutions:**
@@ -216,9 +309,15 @@ pnpm run build  # Test build process
 
 - **Solution**: Check console for Tailwind CSS import errors, ensure Tailwind v4 is properly configured
 
-**Issue**: Tutorial system not loading
+**Issue**: Tutorial system not loading properly
 
-- **Solution**: Verify all tutorial components are imported in App.jsx
+- **Solution**: The tutorial system now uses modern backdrop blur overlays instead of dark backgrounds. Click the "?" help button in the lower right corner to access tutorials with the improved interface.
+
+**Issue**: Tutorial overlay appears black or dark
+
+**Issue**: Tutorial overlay appears black or dark
+
+- **Solution**: Updated to use modern transparent blur effects. If you see old dark overlays, restart the frontend server with `pnpm run dev`.
 
 **Issue**: Charts not displaying
 

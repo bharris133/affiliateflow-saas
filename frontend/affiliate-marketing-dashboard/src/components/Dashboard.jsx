@@ -171,7 +171,10 @@ const Dashboard = ({ user }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 stats-cards">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 stats-cards"
+        data-testid="stats-cards"
+      >
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-green-800">

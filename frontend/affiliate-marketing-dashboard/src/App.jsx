@@ -40,13 +40,8 @@ function App() {
       const userData = JSON.parse(savedUser);
       setUser(userData);
 
-      // Check if user needs onboarding
-      const hasCompletedOnboarding = localStorage.getItem(
-        "onboarding_completed"
-      );
-      if (!hasCompletedOnboarding && userData) {
-        setShowOnboarding(true);
-      }
+      // Don't show onboarding on app reload - only show after fresh login
+      // This prevents onboarding from interfering with tours and other functionality
     }
     setLoading(false);
   }, []);
@@ -74,14 +69,21 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    // Clear all session and tutorial-related data
     localStorage.removeItem("user");
     localStorage.removeItem("onboarding_completed");
+    localStorage.removeItem("completedTours");
+
+    // Reset all tutorial-related states
+    setShowDemoBot(false);
+    setShowOnboarding(false);
+    setShowTutorials(false);
   };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("onboarding_completed", "true");
     setShowOnboarding(false);
-    setShowDemoBot(true); // Show demo bot after onboarding
+    setShowDemoBot(true); // Show DemoBot after onboarding
   };
 
   if (loading) {
@@ -199,7 +201,7 @@ function App() {
         />
 
         {/* Help Button - only show when user is logged in */}
-        {user && <HelpButton onClick={() => setShowDemoBot(true)} />}
+        {user && <HelpButton onClick={() => setShowTutorials(true)} />}
 
         <Toaster />
       </div>

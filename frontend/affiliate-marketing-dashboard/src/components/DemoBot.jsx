@@ -1,445 +1,746 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Play, Pause, SkipForward, RotateCcw, HelpCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  X,
+  HelpCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
+import TourSelectionModal from "./TourSelectionModal";
 
-const DemoBot = ({ isOpen, onClose, currentPage = 'dashboard' }) => {
-  const [currentTour, setCurrentTour] = useState(null);
+const DemoBot = ({ isOpen, onClose, currentPage }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const intervalRef = useRef(null);
+  const [currentTour, setCurrentTour] = useState(null);
+  const [showTourSelection, setShowTourSelection] = useState(false);
+  const [isTourActive, setIsTourActive] = useState(false);
 
-  // Demo tours for different pages
-  const demoTours = {
+  // Handle external isOpen prop (from App.jsx when onboarding completes)
+  useEffect(() => {
+    if (isOpen) {
+      setShowTourSelection(true); // Show tour selection modal when opened from onboarding
+    }
+  }, [isOpen]);
+
+  // Handle location changes to ensure tutorial visibility is maintained
+  useEffect(() => {
+    // If a tour is active and we are on the right page, ensure visibility
+    if (isTourActive && currentTour && tours[currentTour]) {
+      const tour = tours[currentTour];
+      if (
+        tour.page &&
+        location.pathname === tour.page &&
+        currentStep !== "completed"
+      ) {
+        // Longer delay to ensure page is fully rendered
+        setTimeout(() => {
+          if (!isVisible) {
+            setIsVisible(true);
+          }
+        }, 500);
+      }
+    }
+  }, [location.pathname, currentTour, currentStep, isVisible, isTourActive]);
+
+  const tours = {
     dashboard: {
-      title: "Dashboard Overview",
-      description: "Learn how to navigate your AffiliateFlow dashboard",
+      name: "Dashboard Tour",
+      page: "/dashboard",
       steps: [
         {
-          target: ".sidebar",
-          title: "Navigation Sidebar",
-          content: "Use the sidebar to navigate between different sections of your dashboard. Each icon represents a different feature.",
-          position: "right",
-          highlight: true
-        },
-        {
-          target: ".stats-cards",
-          title: "Performance Overview",
-          content: "These cards show your key metrics at a glance - revenue, clicks, conversions, and growth rates.",
+          target:
+            "[data-testid='stats-cards'], .stats-cards, .grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-4",
+          title: "Overview Cards",
+          content:
+            "These cards show your key performance metrics at a glance - revenue, visitors, content count, and conversion rates.",
           position: "bottom",
-          highlight: true
         },
         {
-          target: ".revenue-chart",
-          title: "Revenue Analytics",
-          content: "Track your earnings over time with detailed revenue analytics and forecasting.",
-          position: "top",
-          highlight: true
+          target: ".bg-gradient-to-br.from-green-50, [class*='from-green-50']",
+          title: "Revenue Tracking",
+          content:
+            "Monitor your affiliate earnings and revenue trends. This shows your total earnings and percentage growth.",
+          position: "bottom",
         },
         {
-          target: ".recent-activity",
-          title: "Recent Activity",
-          content: "Stay updated with your latest affiliate activities, clicks, and conversions.",
+          target: ".bg-gradient-to-br.from-blue-50, [class*='from-blue-50']",
+          title: "Visitor Analytics",
+          content:
+            "Track how many people are visiting your content and engaging with your affiliate links.",
           position: "left",
-          highlight: true
-        }
-      ]
+        },
+        {
+          target:
+            ".recent-activities, [class*='activity'], .bg-gradient-to-br.from-purple-50, [class*='from-purple-50']",
+          title: "Recent Activity",
+          content:
+            "Stay updated with your latest affiliate activities, clicks, and conversions.",
+          position: "top",
+        },
+      ],
     },
     contentGenerator: {
-      title: "AI Content Generation",
-      description: "Create high-converting affiliate content with AI",
+      name: "Content Generator Tour",
+      page: "/dashboard/content",
       steps: [
         {
-          target: ".content-type-selector",
-          title: "Content Types",
-          content: "Choose from various content types: blog posts, product reviews, social media posts, and email campaigns.",
+          target: "[data-tour-id='content-type']",
+          title: "Choose Content Type",
+          content:
+            "Select what type of content you want to create - blog posts, social media posts, emails, or product reviews.",
           position: "bottom",
-          highlight: true
         },
         {
-          target: ".ai-prompt-input",
-          title: "AI Prompt",
-          content: "Describe what you want to create. Be specific about your target audience, product, and desired tone.",
-          position: "top",
-          highlight: true
-        },
-        {
-          target: ".keywords-input",
-          title: "SEO Keywords",
-          content: "Add relevant keywords to optimize your content for search engines and better rankings.",
+          target: "[data-tour-id='topic']",
+          title: "Content Topic",
+          content:
+            "Enter the main topic or subject for your content. Be specific to get better AI-generated results.",
           position: "right",
-          highlight: true
         },
         {
-          target: ".generate-button",
+          target: "[data-tour-id='audience']",
+          title: "Target Audience",
+          content:
+            "Define who you're writing for. This helps the AI tailor the tone and style of the content.",
+          position: "left",
+        },
+        {
+          target: "[data-tour-id='generate-button']",
           title: "Generate Content",
-          content: "Click to generate AI-powered content. The system will create optimized, engaging content in seconds.",
+          content:
+            "Click here to let AI create your affiliate marketing content based on your inputs.",
           position: "top",
-          highlight: true
-        }
-      ]
+        },
+      ],
     },
     socialMedia: {
-      title: "Social Media Automation",
-      description: "Automate your social media presence across 10+ platforms",
+      name: "Social Media Manager Tour",
+      page: "/dashboard/social",
       steps: [
         {
-          target: ".platform-selector",
-          title: "Platform Selection",
-          content: "Choose which social media platforms to post to. You can select multiple platforms for cross-posting.",
+          target: ".social-accounts, [class*='social-account']",
+          title: "Connect Your Accounts",
+          content:
+            "Link your social media accounts (Facebook, Instagram, Twitter, LinkedIn) to manage them all from one place.",
           position: "bottom",
-          highlight: true
         },
         {
-          target: ".content-editor",
-          title: "Content Editor",
-          content: "Create or edit your social media content. The editor adapts content for each platform's requirements.",
+          target: ".post-scheduler, [class*='schedule']",
+          title: "Schedule Posts",
+          content:
+            "Plan and schedule your content to be posted automatically at optimal times for maximum engagement.",
           position: "left",
-          highlight: true
         },
         {
-          target: ".scheduling-calendar",
-          title: "Smart Scheduling",
-          content: "Schedule posts for optimal engagement times. AI suggests the best times based on your audience.",
-          position: "top",
-          highlight: true
-        },
-        {
-          target: ".analytics-preview",
+          target: ".analytics, [class*='analytic']",
           title: "Performance Analytics",
-          content: "Monitor engagement, reach, and conversions across all your social media platforms.",
-          position: "right",
-          highlight: true
-        }
-      ]
+          content:
+            "Track engagement, clicks, and performance across all your social media platforms.",
+          position: "top",
+        },
+      ],
     },
     affiliateLinks: {
-      title: "Affiliate Link Management",
-      description: "Track and optimize your affiliate links for maximum conversions",
+      name: "Affiliate Links Tour",
+      page: "/dashboard/affiliates",
       steps: [
         {
-          target: ".link-creator",
-          title: "Link Creation",
-          content: "Create trackable affiliate links with custom parameters and UTM codes for better attribution.",
+          target: ".affiliate-programs, [class*='program']",
+          title: "Affiliate Programs",
+          content:
+            "Manage all your affiliate programs and partnerships in one centralized location.",
           position: "bottom",
-          highlight: true
         },
         {
-          target: ".link-analytics",
-          title: "Link Analytics",
-          content: "Monitor clicks, conversions, and revenue for each affiliate link in real-time.",
-          position: "top",
-          highlight: true
-        },
-        {
-          target: ".ab-testing",
-          title: "A/B Testing",
-          content: "Test different link placements, descriptions, and call-to-actions to optimize conversions.",
+          target: ".link-generator, [class*='link']",
+          title: "Link Management",
+          content:
+            "Create, track, and optimize your affiliate links for better conversion rates.",
           position: "right",
-          highlight: true
         },
         {
-          target: ".fraud-protection",
-          title: "Fraud Protection",
-          content: "Advanced fraud detection protects your links from invalid clicks and ensures accurate tracking.",
-          position: "left",
-          highlight: true
-        }
-      ]
+          target: ".performance-metrics, [class*='performance']",
+          title: "Performance Tracking",
+          content:
+            "Monitor clicks, conversions, and earnings for each affiliate link and program.",
+          position: "top",
+        },
+      ],
     },
     analytics: {
-      title: "Advanced Analytics",
-      description: "Deep insights into your affiliate marketing performance",
+      name: "Analytics Tour",
+      page: "/dashboard/analytics",
       steps: [
         {
-          target: ".revenue-dashboard",
-          title: "Revenue Dashboard",
-          content: "Comprehensive revenue tracking with forecasting and trend analysis across all your campaigns.",
+          target: ".analytics-overview, [class*='overview']",
+          title: "Analytics Overview",
+          content:
+            "Get comprehensive insights into your affiliate marketing performance across all channels.",
           position: "bottom",
-          highlight: true
         },
         {
-          target: ".conversion-funnel",
+          target: ".conversion-funnel, [class*='funnel']",
           title: "Conversion Funnel",
-          content: "Visualize your customer journey from first click to final conversion to identify optimization opportunities.",
-          position: "top",
-          highlight: true
-        },
-        {
-          target: ".audience-insights",
-          title: "Audience Insights",
-          content: "Understand your audience demographics, behavior patterns, and preferences for better targeting.",
-          position: "right",
-          highlight: true
-        },
-        {
-          target: ".competitor-analysis",
-          title: "Competitor Analysis",
-          content: "Benchmark your performance against industry standards and competitor strategies.",
+          content:
+            "Analyze your customer journey from first click to final conversion.",
           position: "left",
-          highlight: true
-        }
-      ]
-    }
-  };
-
-  // Feature demonstrations
-  const featureDemo = {
-    aiContentGeneration: {
-      title: "AI Content Generation Demo",
-      steps: [
-        "Select 'Blog Post' as content type",
-        "Enter prompt: 'Write a review for wireless headphones targeting fitness enthusiasts'",
-        "Add keywords: 'wireless headphones, fitness, workout, bluetooth'",
-        "Click Generate and watch AI create optimized content",
-        "Review and edit the generated content",
-        "Publish directly to your website or save as draft"
-      ]
+        },
+        {
+          target: ".revenue-breakdown, [class*='revenue']",
+          title: "Revenue Analysis",
+          content:
+            "Deep dive into your earnings by source, time period, and affiliate program.",
+          position: "top",
+        },
+      ],
     },
-    socialMediaPosting: {
-      title: "Multi-Platform Social Media Demo",
-      steps: [
-        "Select platforms: Instagram, Facebook, Twitter, LinkedIn",
-        "Upload or generate an image for your post",
-        "Write your caption with hashtags and mentions",
-        "AI optimizes content for each platform automatically",
-        "Schedule for optimal posting times",
-        "Monitor engagement and performance in real-time"
-      ]
-    },
-    affiliateLinkTracking: {
-      title: "Affiliate Link Tracking Demo",
-      steps: [
-        "Paste your original affiliate link",
-        "Add custom parameters and UTM codes",
-        "Generate shortened, trackable link",
-        "Embed link in your content",
-        "Monitor clicks and conversions in real-time",
-        "Analyze performance and optimize placement"
-      ]
-    }
   };
 
   useEffect(() => {
-    if (currentPage && demoTours[currentPage]) {
-      setCurrentTour(demoTours[currentPage]);
-      setCurrentStep(0);
-    }
-  }, [currentPage]);
+    if (isVisible && currentTour && tours[currentTour]) {
+      // Add a longer delay to ensure DOM elements are available after page navigation
+      const timer = setTimeout(() => {
+        highlightElement();
+      }, 300); // Increased delay from 100ms to 300ms
 
-  useEffect(() => {
-    if (isPlaying && currentTour) {
-      intervalRef.current = setInterval(() => {
-        setCurrentStep(prev => {
-          if (prev >= currentTour.steps.length - 1) {
-            setIsPlaying(false);
-            return prev;
+      return () => {
+        clearTimeout(timer);
+        removeHighlight();
+      };
+    }
+
+    return () => {
+      removeHighlight();
+    };
+  }, [isVisible, currentStep, currentTour]);
+
+  const highlightElement = () => {
+    removeHighlight();
+
+    if (!tours[currentTour] || !tours[currentTour].steps[currentStep]) return;
+
+    const targetSelector = tours[currentTour].steps[currentStep].target;
+
+    // Debug: Log all possible selectors we're trying
+    console.log("Trying to find element with selectors:", targetSelector);
+
+    // Try multiple selectors if the target has multiple options (separated by commas)
+    const selectors = targetSelector.split(",").map((s) => s.trim());
+    let element = null;
+
+    for (const selector of selectors) {
+      console.log("Trying selector:", selector); // Debug each selector
+      element = document.querySelector(selector);
+      if (element) {
+        console.log("Found element with selector:", selector, element); // Debug success
+        break;
+      }
+    }
+
+    if (element) {
+      // Add subtle glow to the element
+      element.style.position = "relative";
+      element.style.zIndex = "1001";
+      element.style.boxShadow = "0 0 20px rgba(59, 130, 246, 0.8)";
+      element.style.borderRadius = "8px";
+      element.style.transition = "all 0.3s ease";
+      element.dataset.highlighted = "true";
+
+      // Add animated blue dot indicator
+      const rect = element.getBoundingClientRect();
+      const indicator = document.createElement("div");
+      indicator.className = "tutorial-indicator";
+      indicator.style.cssText = `
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: #3b82f6;
+        border: 3px solid white;
+        border-radius: 50%;
+        z-index: 1003;
+        pointer-events: none;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        animation: pulse 2s infinite;
+        top: ${rect.top + rect.height / 2 - 10}px;
+        left: ${rect.left + rect.width / 2 - 10}px;
+      `;
+
+      // Add CSS animation if not already added
+      if (!document.querySelector("#tutorial-styles")) {
+        const style = document.createElement("style");
+        style.id = "tutorial-styles";
+        style.textContent = `
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
           }
-          return prev + 1;
-        });
-      }, 4000); // 4 seconds per step
+        `;
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(indicator);
     } else {
-      clearInterval(intervalRef.current);
+      console.warn("Target element not found:", targetSelector);
+      // Debug: Log what elements ARE available
+      console.log("Available elements with similar classes:");
+      console.log(
+        "- content-type elements:",
+        document.querySelectorAll("[class*='content']")
+      );
+      console.log(
+        "- generate elements:",
+        document.querySelectorAll("[class*='generate']")
+      );
+      console.log(
+        "- topic elements:",
+        document.querySelectorAll("[id*='topic'], [name*='topic']")
+      );
+      console.log("- buttons:", document.querySelectorAll("button"));
+    }
+  };
+
+  const removeHighlight = () => {
+    const highlightedElements = document.querySelectorAll(
+      '[data-highlighted="true"]'
+    );
+    highlightedElements.forEach((element) => {
+      element.style.boxShadow = "";
+      element.style.zIndex = "";
+      element.removeAttribute("data-highlighted");
+    });
+
+    // Remove animated indicators
+    const indicators = document.querySelectorAll(".tutorial-indicator");
+    indicators.forEach((indicator) => indicator.remove());
+  };
+
+  const startTour = (tourKey = "dashboard") => {
+    console.log("Starting tour:", tourKey); // Debug log
+    console.log("Available tours:", Object.keys(tours)); // Debug log
+    console.log("Tour exists?", !!tours[tourKey]); // Debug log
+
+    const tour = tours[tourKey];
+    if (!tour) {
+      console.error("Tour not found:", tourKey);
+      return;
     }
 
-    return () => clearInterval(intervalRef.current);
-  }, [isPlaying, currentTour]);
-
-  const startTour = (tourKey) => {
-    setCurrentTour(demoTours[tourKey]);
+    // Set tour state first
+    setCurrentTour(tourKey);
     setCurrentStep(0);
-    setIsPlaying(true);
+    setShowTourSelection(false);
+
+    // Navigate to the tour's page if specified
+    if (tour.page && location.pathname !== tour.page) {
+      console.log("Navigating to page:", tour.page);
+      navigate(tour.page);
+
+      // Wait a moment for the page to load before making tutorial visible
+      setTimeout(() => {
+        console.log("Setting isVisible to true after navigation"); // Debug log
+        setIsVisible(true);
+      }, 1200); // Increased delay further for page load
+    } else {
+      // Start tour immediately if already on the correct page
+      console.log("Setting isVisible to true immediately"); // Debug log
+      setIsVisible(true);
+    }
   };
 
   const nextStep = () => {
-    if (currentTour && currentStep < currentTour.steps.length - 1) {
+    if (currentStep < tours[currentTour].steps.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+      completeTour();
     }
   };
 
-  const prevStep = () => {
+  const previousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const resetTour = () => {
-    setCurrentStep(0);
-    setIsPlaying(false);
+  const completeTour = () => {
+    removeHighlight();
+
+    // Mark tour as completed
+    const completedTours = JSON.parse(
+      localStorage.getItem("completedTours") || "[]"
+    );
+    if (!completedTours.includes(currentTour)) {
+      completedTours.push(currentTour);
+      localStorage.setItem("completedTours", JSON.stringify(completedTours));
+    }
+
+    // Set to a special "completed" step to show completion message
+    setCurrentStep("completed");
+    // Keep the tutorial widget visible (don't set isVisible to false)
   };
 
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  const closeTour = () => {
+    removeHighlight();
+    setIsVisible(false);
+    setShowTourSelection(false);
+    if (onClose) {
+      onClose(); // Call external onClose if provided
+    }
   };
 
-  if (!isOpen) return null;
+  const showTourSelectionModal = () => {
+    setShowTourSelection(true);
+  };
+
+  const handleTourSelect = (tourKey) => {
+    console.log("Selected tour key:", tourKey); // Debug log
+    // Map TourSelectionModal tour IDs to DemoBot tour keys
+    const tourKeyMap = {
+      "dashboard-overview": "dashboard",
+      "onboarding-basics": "dashboard",
+      "content-generator": "contentGenerator",
+      "content-optimization": "contentGenerator",
+      "affiliate-links": "affiliateLinks",
+      "conversion-tracking": "analytics",
+      "social-posting": "socialMedia",
+      "engagement-tracking": "socialMedia",
+      "email-campaigns": "contentGenerator", // Could be content generator for email content
+      "list-management": "affiliateLinks", // Could be affiliate links management
+      "analytics-setup": "analytics",
+      "performance-tracking": "analytics",
+      "account-settings": "dashboard", // placeholder until we have settings tour
+      "notification-setup": "dashboard", // placeholder
+    };
+
+    const mappedTourKey = tourKeyMap[tourKey] || "dashboard"; // fallback to dashboard
+    console.log("Mapped tour key:", mappedTourKey); // Debug log
+    startTour(mappedTourKey);
+  };
+
+  const getCurrentStep = () => {
+    // Handle completion state
+    if (currentStep === "completed") {
+      return {
+        title: "🎉 Tour Completed!",
+        content: `Great job! You've completed the ${
+          tours[currentTour]?.name || "tutorial"
+        }. You can now explore more tours or continue using the platform.`,
+        position: "center",
+      };
+    }
+
+    if (!tours[currentTour] || !tours[currentTour].steps[currentStep]) {
+      console.log("No valid step found for:", {
+        currentTour,
+        currentStep,
+        tourExists: !!tours[currentTour],
+      }); // Debug log
+      return null;
+    }
+    const step = tours[currentTour].steps[currentStep];
+    console.log("Current step:", step); // Debug log
+    return step;
+  };
+
+  const getTourPosition = () => {
+    const step = getCurrentStep();
+    if (!step) return { top: "50%", left: "50%" };
+
+    // Center the completion message
+    if (currentStep === "completed") {
+      return {
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      };
+    }
+
+    // Try to find the target element using multiple selectors
+    const selectors = step.target.split(",").map((s) => s.trim());
+    let targetElement = null;
+
+    for (const selector of selectors) {
+      targetElement = document.querySelector(selector);
+      if (targetElement) break;
+    }
+
+    if (!targetElement) {
+      console.warn("Target element not found for positioning:", step.target);
+      // Position on the right side when element not found to avoid interference
+      return {
+        top: "50%",
+        right: "20px",
+        transform: "translateY(-50%)",
+      };
+    }
+
+    const rect = targetElement.getBoundingClientRect();
+    const position = step.position || "bottom";
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // Smart positioning to avoid going off-screen and interfering with other elements
+    switch (position) {
+      case "top":
+        return {
+          top: `${Math.max(20, rect.top - 20)}px`,
+          left: `${Math.min(
+            windowWidth - 400,
+            Math.max(20, rect.left + rect.width / 2)
+          )}px`,
+          transform: "translate(-50%, -100%)",
+        };
+      case "bottom":
+        return {
+          top: `${Math.min(windowHeight - 200, rect.bottom + 20)}px`,
+          left: `${Math.min(
+            windowWidth - 400,
+            Math.max(20, rect.left + rect.width / 2)
+          )}px`,
+          transform: "translate(-50%, 0)",
+        };
+      case "left":
+        return {
+          top: `${Math.min(
+            windowHeight - 200,
+            Math.max(20, rect.top + rect.height / 2)
+          )}px`,
+          left: `${Math.max(20, rect.left - 20)}px`,
+          transform: "translate(-100%, -50%)",
+        };
+      case "right":
+        return {
+          top: `${Math.min(
+            windowHeight - 200,
+            Math.max(20, rect.top + rect.height / 2)
+          )}px`,
+          left: `${Math.min(windowWidth - 400, rect.right + 20)}px`,
+          transform: "translate(0, -50%)",
+        };
+      default:
+        return {
+          top: `${Math.min(windowHeight - 200, rect.bottom + 20)}px`,
+          left: `${Math.min(
+            windowWidth - 400,
+            Math.max(20, rect.left + rect.width / 2)
+          )}px`,
+          transform: "translate(-50%, 0)",
+        };
+    }
+  };
+
+  const currentStepData = getCurrentStep();
+
+  console.log("DemoBot state:", {
+    isVisible,
+    showTourSelection,
+    isOpen,
+    currentTour,
+    currentStep,
+    currentStepData: !!currentStepData,
+    locationPathname: location.pathname,
+  }); // Debug log
+
+  console.log("DemoBot render condition:", {
+    shouldRender: !(!isVisible && !showTourSelection && !isOpen),
+    isVisible,
+    showTourSelection,
+    isOpen,
+  }); // Debug log
+
+  if (!isVisible && !showTourSelection && !isOpen) return null;
 
   return (
     <>
-      {/* Demo Bot Panel */}
-      <div className="fixed right-4 top-4 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-50">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <HelpCircle className="w-4 h-4 text-white" />
-            </div>
-            <h3 className="font-semibold text-gray-900">AffiliateFlow Guide</h3>
+      {/* Tour Selection Modal */}
+      {(showTourSelection || isOpen) && (
+        <TourSelectionModal
+          onSelectTour={handleTourSelect}
+          onClose={() => {
+            setShowTourSelection(false);
+            if (onClose) {
+              onClose(); // Call external onClose if provided
+            }
+          }}
+        />
+      )}
+
+      {/* Tour Tooltip */}
+      {isVisible && currentStepData && (
+        <div
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-6 max-w-sm w-full"
+          style={{
+            ...getTourPosition(),
+            zIndex: 1002,
+          }}
+        >
+          {console.log("Rendering Tour Tooltip:", {
+            isVisible,
+            currentStepData,
+            position: getTourPosition(),
+          })}
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {currentStepData.title}
+            </h3>
+            <button
+              onClick={closeTour}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
-        <div className="p-4">
-          {!currentTour ? (
-            // Tour Selection
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Choose a guided tour:</h4>
-              <div className="space-y-2">
-                {Object.entries(demoTours).map(([key, tour]) => (
-                  <button
-                    key={key}
-                    onClick={() => startTour(key)}
-                    className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                  >
-                    <div className="font-medium text-gray-900">{tour.title}</div>
-                    <div className="text-sm text-gray-600 mt-1">{tour.description}</div>
-                  </button>
-                ))}
-              </div>
+          {/* Content */}
+          <p className="text-gray-600 mb-6">{currentStepData.content}</p>
 
-              <div className="border-t border-gray-200 pt-4">
-                <h4 className="font-medium text-gray-900 mb-2">Feature Demos:</h4>
-                <div className="space-y-2">
-                  {Object.entries(featureDemo).map(([key, demo]) => (
-                    <button
-                      key={key}
-                      className="w-full text-left p-2 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors text-sm"
-                    >
-                      <div className="font-medium text-gray-900">{demo.title}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Progress */}
+          <div className="flex items-center justify-between mb-4">
+            {currentStep === "completed" ? (
+              <span className="text-sm text-green-600 font-medium">
+                ✅ Tour Complete
+              </span>
+            ) : (
+              <span className="text-sm text-gray-500">
+                Step {currentStep + 1} of {tours[currentTour].steps.length}
+              </span>
+            )}
+            <div className="flex space-x-1">
+              {tours[currentTour].steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    currentStep === "completed" || index <= currentStep
+                      ? "bg-blue-500"
+                      : "bg-gray-300"
+                  }`}
+                />
+              ))}
+              {currentStep === "completed" && (
+                <div className="w-2 h-2 rounded-full bg-green-500 ml-1" />
+              )}
             </div>
-          ) : (
-            // Active Tour
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-900">{currentTour.title}</h4>
-                <p className="text-sm text-gray-600">{currentTour.description}</p>
-              </div>
+          </div>
 
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Step {currentStep + 1} of {currentTour.steps.length}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={togglePlayPause}
-                      className="p-1 rounded hover:bg-gray-200 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-4 h-4 text-gray-600" />
-                      ) : (
-                        <Play className="w-4 h-4 text-gray-600" />
-                      )}
-                    </button>
-                    <button
-                      onClick={resetTour}
-                      className="p-1 rounded hover:bg-gray-200 transition-colors"
-                    >
-                      <RotateCcw className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${((currentStep + 1) / currentTour.steps.length) * 100}%` }}
-                  ></div>
-                </div>
-
-                <div className="space-y-2">
-                  <h5 className="font-medium text-gray-900">
-                    {currentTour.steps[currentStep]?.title}
-                  </h5>
-                  <p className="text-sm text-gray-600">
-                    {currentTour.steps[currentStep]?.content}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
+          {/* Actions */}
+          <div className="flex items-center justify-between">
+            {currentStep === "completed" ? (
+              // Completion state actions
+              <div className="flex space-x-2 w-full">
                 <button
-                  onClick={prevStep}
-                  disabled={currentStep === 0}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={showTourSelectionModal}
+                  className="flex-1 flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="text-sm">Previous</span>
+                  <HelpCircle size={16} className="mr-1" />
+                  Browse More Tours
                 </button>
+                <button
+                  onClick={closeTour}
+                  className="flex-1 flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  <X size={16} className="mr-1" />
+                  Close Tutorial
+                </button>
+              </div>
+            ) : (
+              // Regular step actions
+              <>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={previousStep}
+                    disabled={currentStep === 0}
+                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ArrowLeft size={16} className="mr-1" />
+                    Previous
+                  </button>
+
+                  <button
+                    onClick={showTourSelectionModal}
+                    className="flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                  >
+                    <HelpCircle size={16} className="mr-1" />
+                    Back to Tours
+                  </button>
+                </div>
 
                 <button
                   onClick={nextStep}
-                  disabled={currentStep >= currentTour.steps.length - 1}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  <span className="text-sm">Next</span>
-                  <ChevronRight className="w-4 h-4" />
+                  {currentStep === tours[currentTour].steps.length - 1 ? (
+                    <>
+                      <CheckCircle size={16} className="mr-1" />
+                      Complete
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ArrowRight size={16} className="ml-1" />
+                    </>
+                  )}
                 </button>
-              </div>
-
-              <button
-                onClick={() => setCurrentTour(null)}
-                className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                ← Back to tour selection
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Highlight Overlay */}
-      {currentTour && currentTour.steps[currentStep]?.highlight && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 pointer-events-none">
-          <div
-            className="absolute border-2 border-blue-400 rounded-lg shadow-lg"
-            style={{
-              // This would be calculated based on the target element's position
-              top: '100px',
-              left: '200px',
-              width: '300px',
-              height: '200px',
-            }}
-          >
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-400 rounded-full animate-ping"></div>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Tooltip */}
-      {showTooltip && (
+      {/* Overlay - removed blur for better visibility */}
+      {isVisible && (
         <div
-          className="fixed bg-gray-900 text-white text-sm rounded-lg px-3 py-2 z-50 pointer-events-none"
+          className="fixed inset-0 pointer-events-none"
           style={{
-            top: tooltipPosition.y,
-            left: tooltipPosition.x,
+            zIndex: 999,
+            backgroundColor: "transparent", // Completely transparent now
           }}
-        >
-          Click here to continue the tour
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-        </div>
+        />
       )}
     </>
   );
 };
+
+// Export functions to be used by other components
+export const startDashboardTour = () => {
+  const event = new CustomEvent("startTour", { detail: { tour: "dashboard" } });
+  window.dispatchEvent(event);
+};
+
+export const startOnboardingTour = () => {
+  const event = new CustomEvent("startTour", {
+    detail: { tour: "dashboard", onboarding: true },
+  });
+  window.dispatchEvent(event);
+};
+
+export const showTourSelection = () => {
+  const event = new CustomEvent("showTourSelection");
+  window.dispatchEvent(event);
+};
+
+// Add event listeners for the exported functions
+if (typeof window !== "undefined") {
+  window.addEventListener("startTour", (event) => {
+    const demoBot = document.querySelector("[data-demo-bot]");
+    if (demoBot && demoBot._demoBot) {
+      if (event.detail.onboarding) {
+        demoBot._demoBot.setIsOnboardingMode(true);
+      }
+      demoBot._demoBot.startTour(event.detail.tour);
+    }
+  });
+
+  window.addEventListener("showTourSelection", () => {
+    const demoBot = document.querySelector("[data-demo-bot]");
+    if (demoBot && demoBot._demoBot) {
+      demoBot._demoBot.showTourSelectionModal();
+    }
+  });
+}
 
 // Help Button Component
 export const HelpButton = ({ onClick }) => {
@@ -460,59 +761,62 @@ export const OnboardingChecklist = ({ isOpen, onClose, onComplete }) => {
 
   const onboardingSteps = [
     {
-      id: 'profile',
-      title: 'Complete Your Profile',
-      description: 'Add your name, email, and profile picture',
-      action: 'Go to Profile',
-      completed: false
+      id: "profile",
+      title: "Complete Your Profile",
+      description: "Add your name, email, and profile picture",
+      action: "Go to Profile",
+      completed: false,
     },
     {
-      id: 'connect-accounts',
-      title: 'Connect Social Media Accounts',
-      description: 'Link your social media platforms for automated posting',
-      action: 'Connect Accounts',
-      completed: false
+      id: "connect-accounts",
+      title: "Connect Social Media Accounts",
+      description: "Link your social media platforms for automated posting",
+      action: "Connect Accounts",
+      completed: false,
     },
     {
-      id: 'first-content',
-      title: 'Generate Your First Content',
-      description: 'Create AI-powered affiliate content',
-      action: 'Create Content',
-      completed: false
+      id: "first-content",
+      title: "Generate Your First Content",
+      description: "Create AI-powered affiliate content",
+      action: "Create Content",
+      completed: false,
     },
     {
-      id: 'affiliate-links',
-      title: 'Add Affiliate Links',
-      description: 'Set up tracking for your affiliate programs',
-      action: 'Add Links',
-      completed: false
+      id: "affiliate-links",
+      title: "Add Affiliate Links",
+      description: "Set up tracking for your affiliate programs",
+      action: "Add Links",
+      completed: false,
     },
     {
-      id: 'first-post',
-      title: 'Schedule Your First Post',
-      description: 'Share content across your social media platforms',
-      action: 'Schedule Post',
-      completed: false
-    }
+      id: "first-post",
+      title: "Schedule Your First Post",
+      description: "Share content across your social media platforms",
+      action: "Schedule Post",
+      completed: false,
+    },
   ];
 
   const toggleStep = (stepId) => {
-    setCompletedSteps(prev => 
-      prev.includes(stepId) 
-        ? prev.filter(id => id !== stepId)
+    setCompletedSteps((prev) =>
+      prev.includes(stepId)
+        ? prev.filter((id) => id !== stepId)
         : [...prev, stepId]
     );
   };
 
-  const completionPercentage = (completedSteps.length / onboardingSteps.length) * 100;
+  const completionPercentage =
+    (completedSteps.length / onboardingSteps.length) * 100;
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Get Started with AffiliateFlow</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Get Started with AffiliateFlow
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -524,8 +828,12 @@ export const OnboardingChecklist = ({ isOpen, onClose, onComplete }) => {
         <div className="p-6">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Progress</span>
-              <span className="text-sm text-gray-500">{completedSteps.length}/{onboardingSteps.length}</span>
+              <span className="text-sm font-medium text-gray-700">
+                Progress
+              </span>
+              <span className="text-sm text-gray-500">
+                {completedSteps.length}/{onboardingSteps.length}
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -539,40 +847,42 @@ export const OnboardingChecklist = ({ isOpen, onClose, onComplete }) => {
             {onboardingSteps.map((step) => (
               <div
                 key={step.id}
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`border rounded-lg p-4 transition-colors ${
                   completedSteps.includes(step.id)
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? "border-green-200 bg-green-50"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-start space-x-3">
                   <button
                     onClick={() => toggleStep(step.id)}
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 transition-colors ${
+                    className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                       completedSteps.includes(step.id)
-                        ? 'border-green-500 bg-green-500'
-                        : 'border-gray-300 hover:border-green-400'
+                        ? "border-green-500 bg-green-500"
+                        : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
                     {completedSteps.includes(step.id) && (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     )}
                   </button>
                   <div className="flex-1">
-                    <h4 className={`font-medium ${
-                      completedSteps.includes(step.id) ? 'text-green-900' : 'text-gray-900'
-                    }`}>
-                      {step.title}
-                    </h4>
-                    <p className={`text-sm mt-1 ${
-                      completedSteps.includes(step.id) ? 'text-green-700' : 'text-gray-600'
-                    }`}>
+                    <h4 className="font-medium text-gray-900">{step.title}</h4>
+                    <p className="text-sm text-gray-600 mt-1">
                       {step.description}
                     </p>
                     {!completedSteps.includes(step.id) && (
-                      <button className="text-sm text-blue-600 hover:text-blue-700 mt-2 font-medium">
+                      <button className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 transition-colors">
                         {step.action} →
                       </button>
                     )}
@@ -582,17 +892,39 @@ export const OnboardingChecklist = ({ isOpen, onClose, onComplete }) => {
             ))}
           </div>
 
-          {completionPercentage === 100 && (
-            <div className="mt-6 p-4 bg-green-100 rounded-lg">
-              <h4 className="font-medium text-green-900 mb-2">🎉 Congratulations!</h4>
-              <p className="text-sm text-green-700 mb-3">
-                You've completed the onboarding process. You're ready to start earning with AffiliateFlow!
-              </p>
+          {completedSteps.length === onboardingSteps.length && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium text-green-900">
+                    Congratulations!
+                  </h4>
+                  <p className="text-sm text-green-700">
+                    You've completed the onboarding process.
+                  </p>
+                </div>
+              </div>
               <button
-                onClick={onComplete}
-                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => {
+                  onComplete(); // This will close onboarding and show TourSelectionModal
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                Start Using AffiliateFlow
+                <HelpCircle className="w-4 h-4" />
+                <span>Start Dashboard Tour</span>
               </button>
             </div>
           )}
@@ -603,4 +935,3 @@ export const OnboardingChecklist = ({ isOpen, onClose, onComplete }) => {
 };
 
 export default DemoBot;
-
