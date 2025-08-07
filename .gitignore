@@ -255,6 +255,7 @@ dist
 public
 
 # Vite build output
+.vite/
 dist/
 dist-ssr/
 
